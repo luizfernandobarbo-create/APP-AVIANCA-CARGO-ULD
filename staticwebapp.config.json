@@ -1,0 +1,20 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/ocr/*", "/lib/*", "/fonts/*", "/icons/*", "/*.{js,json,webmanifest,css,png,woff2,gz}"]
+  },
+  "mimeTypes": {
+    ".webmanifest": "application/manifest+json",
+    ".woff2": "font/woff2",
+    ".gz": "application/octet-stream"
+  },
+  "routes": [
+    {"route": "/sw.js", "headers": {"Cache-Control": "no-cache"}},
+    {"route": "/config.js", "headers": {"Cache-Control": "no-cache"}},
+    {"route": "/index.html", "headers": {"Cache-Control": "no-cache"}}
+  ],
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "same-origin"
+  }
+}
