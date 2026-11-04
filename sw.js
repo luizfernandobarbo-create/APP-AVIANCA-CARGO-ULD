@@ -1,5 +1,5 @@
 /* ULD Check — service worker. O app abre sem internet; fotos e dados ficam no celular até serem enviados. */
-const VERSION = 'uldcheck-1.0.0';
+const VERSION = 'uldcheck-1.1.0';
 const CORE = ['./', './index.html', './manifest.webmanifest', './config.js', './lib/msal-browser.min.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png',
   './fonts/fonts.css', './fonts/lexend-400.woff2', './fonts/lexend-500.woff2', './fonts/lexend-600.woff2', './fonts/lexend-700.woff2',
