@@ -1,14 +1,33 @@
-# ULD Check 1.1.0 — versão de produção
+# ULD Check 1.2.0 — versão de produção
 
 App da operação para montar ULDs (WB) e carretas (NB) em voos PAX e CAO. Ele confere o peso por foto do ticket ou do visor da balança, ou por double-check nas carretas, e gera os documentos:
 
 - **PAX:** a ficha de controle de carregamento (Excel, no modelo oficial).
-- **CAO:** a HOJA DE PALETIZADO (LCS do cargueiro).
+- **CAO:** a HOJA DE PALETIZADO CAO, com as abas HOJA DE PALETIZADO e LCS preenchidas.
 - **Todos os voos:** as TAGs (PDF).
 
 No final, envia tudo pelo WhatsApp, por e-mail e para o SharePoint.
 
 É um aplicativo web instalável (PWA). Abre no navegador do celular e é instalado na tela inicial como um app. Funciona sem internet depois da primeira abertura e volta exatamente de onde o operador parou se ele sair para outra coisa no celular.
+
+## Novidades da 1.2.0
+
+- **Aeroportos:** a origem e o destino do voo e o destino dos AWBs aceitam qualquer código IATA de aeroporto do mundo (cerca de 8 mil códigos, mais os códigos de cidade como SAO, BUE e NYC).
+  - O app mostra a cidade do código digitado (ex.: GYN → Goiania, BR) para o operador conferir.
+  - Um código que não existe na lista IATA ainda pede confirmação ("Usar XXX").
+- **Voo CAO:**
+  - Pede a matrícula do avião, num campo único de letras e números (ex.: N336QT). As últimas matrículas usadas no celular aparecem para tocar, e a matrícula pode ser corrigida na conferência, antes de gerar os documentos.
+  - Cada ULD pede o seu destino (3 letras IATA), logo depois do número. O destino do voo e os destinos já usados aparecem para tocar.
+  - O destino do ULD sai na TAG (DESTINATION), na aba HOJA DE PALETIZADO (DEST ULD) e no LCS (Destino final).
+- **Comentários por ULD:** depois de montar os ULDs e antes dos pesos, uma tela opcional permite escrever um comentário em cada ULD ou carreta.
+  - As sugestões vêm da lista de observações da HOJA (Macho doble, Hembra doble, Stack de pallets...) e dos comentários já usados no celular.
+  - O comentário sai no REMARKS da TAG e, no CAO, em Comentarios/Remarks das abas HOJA DE PALETIZADO e LCS. Também vai no WhatsApp e no e-mail.
+- **TAG com carga perigosa:** cada AWB com DGR (inclui ELI, ELM e ICE) ganha uma linha no REMARKS com o número do AWB, o código, as peças DGR e o peso DGR (peças × peso por volume). Ex.: "DGR AWB 729-94452024 · ELI · 2 PCS · 21 KG".
+- **HOJA DE PALETIZADO CAO no modelo novo,** com as duas abas preenchidas:
+  - **HOJA DE PALETIZADO:** uma linha por AWB (AWB, destino do AWB, peças e COD. IMP). As colunas do ULD (contorno, número, prioridade, peso, destino do ULD e comentário) ficam na primeira linha e mescladas nas linhas dos AWBs do mesmo ULD. O cabeçalho traz data, estação, voo, rota, matrícula e versão. O TOTAL fica como no modelo; a linha fixa KOB (linha 108) saiu, porque não é usada na operação.
+  - **LCS:** uma linha por ULD, como a macro MoverAHojaLCS fazia: contorno, ULD, destino do ULD, peso, peças, códigos IMP e comentários. O cabeçalho traz voo, data, versão, matrícula e rota. Continuam os blocos Conferido por, início e fim do armado e comentários para despacho.
+  - É um .xlsx comum, sem macro. Saíram a aba NOTOC, o vínculo com outra planilha (CodigosIMP) e as validações quebradas (#REF!). A proteção da aba LCS foi mantida.
+  - Com mais AWBs ou ULDs do que as linhas do modelo, a planilha cresce, e o TOTAL, as fórmulas e a área de impressão acompanham.
 
 ## Novidades da 1.1.0
 
@@ -43,7 +62,7 @@ No final, envia tudo pelo WhatsApp, por e-mail e para o SharePoint.
 
 | Arquivo / pasta | Para que serve |
 |---|---|
-| `index.html` | O app inteiro (inclui os modelos da ficha e da HOJA) |
+| `index.html` | O app inteiro (inclui os modelos da ficha e da HOJA e a lista de aeroportos IATA) |
 | `config.js` | **Único arquivo que a TI edita** (SharePoint e e-mail) |
 | `sw.js` | Service worker: guarda o app no celular para abrir sem internet |
 | `manifest.webmanifest`, `icons/` | Nome e ícone do app instalado |
@@ -52,7 +71,7 @@ No final, envia tudo pelo WhatsApp, por e-mail e para o SharePoint.
 | `fonts/` | Fontes do app (sem depender da internet) |
 | `web.config` | Ajustes para publicar em IIS |
 | `staticwebapp.config.json` | Ajustes para publicar no Azure Static Web Apps |
-| `lib/LICENCAS.txt` | Licenças das bibliotecas usadas |
+| `lib/LICENCAS.txt` | Licenças das bibliotecas e da lista de aeroportos IATA (airportsdata, MIT) |
 
 ## 1. Publicar (TI)
 
@@ -145,19 +164,20 @@ As fotos vão anexadas no WhatsApp e no e-mail e são salvas no SharePoint junto
 - Tudo fica no próprio celular (armazenamento do navegador) até o operador enviar. Não há servidor intermediário: a leitura das fotos roda no celular.
 - O voo em andamento é salvo a cada toque. Se o operador sair para outro app, receber uma ligação ou o sistema fechar o navegador, o app reabre na mesma tela, com os campos preenchidos; se a câmera estava aberta, ela volta aberta.
 - "Novo voo" e "Voltar ao início" apagam do celular os dados e as fotos do voo anterior, depois de confirmar.
-- O nome e o e-mail de quem paletiza ficam guardados no celular para os próximos voos.
+- O nome e o e-mail de quem paletiza ficam guardados no celular para os próximos voos, assim como as últimas matrículas e os comentários usados (só como sugestão).
 - O login Microsoft é guardado pelo próprio MSAL no navegador; "Sair", nas configurações (ícone do globo), encerra a sessão.
 
 ## 6. Atualizar para uma nova versão
 
-Substitua os arquivos da pasta publicada **mantendo o seu `config.js`**. Na 1.1.0, o `config.js` ganhou o bloco `email`; um `config.js` antigo continua funcionando, e o e-mail sai pelo app de e-mail do celular. Os celulares recebem a nova versão na próxima vez que abrirem o app com internet; a versão aparece nas configurações (ícone do globo).
+Substitua os arquivos da pasta publicada **mantendo o seu `config.js`**. A 1.2.0 não muda o `config.js`. Na 1.1.0, o `config.js` ganhou o bloco `email`; um `config.js` antigo continua funcionando, e o e-mail sai pelo app de e-mail do celular. Os celulares recebem a nova versão na próxima vez que abrirem o app com internet; a versão aparece nas configurações (ícone do globo).
 
 ## 7. Limites conhecidos
 
 - A leitura de visor foi feita para visores de LED vermelho de 7 segmentos, como o da LD1050. Visores LCD ou de outras cores caem no fluxo de digitar o valor.
 - A leitura de tickets foi ajustada para o ticket da Aeropuertos Argentina 2000 (TICKET NRO, Elemento Numero, PESO BRUTO). Outros modelos caem no fluxo de digitar o peso.
 - A leitura automática de tickets precisa de internet só na primeira vez, para baixar os arquivos de leitura; depois funciona sem rede.
-- Na HOJA DE PALETIZADO, ETD e matrícula ficam em branco para o load control preencher; o app não pede esses dados.
+- Na HOJA DE PALETIZADO CAO, ETD, Cut off e Origen (estación previa) ficam em branco para o load control preencher; o app não pede esses dados.
+- No PAX, o comentário do ULD sai na TAG, no WhatsApp e no e-mail; a ficha de controle de carregamento não tem coluna de comentários.
 - Na ficha de controle (PAX), as colunas Peso Tara e Peso Neto ficam em branco nos ULDs, porque o app usa só o peso da balança. Nas carretas com tara, elas são preenchidas.
 - Se as peças de um ULD já pesado mudarem, o app apaga o peso e a foto desse ULD e pede para pesar de novo.
 - Sem a etapa 2, o e-mail depende do app de e-mail do celular, e o destinatário é colado pelo operador.
